@@ -2,8 +2,6 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import * as dat from "dat.gui";
 
-console.log(OrbitControls);
-
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
 	75,
@@ -12,6 +10,7 @@ const camera = new THREE.PerspectiveCamera(
 	1000
 );
 const renderer = new THREE.WebGLRenderer();
+const raycaster = new THREE.Raycaster();
 const gui = new dat.GUI();
 const world = {
 	plane: {
@@ -52,9 +51,9 @@ document.body.appendChild(renderer.domElement);
 
 const planeGeometry = new THREE.PlaneGeometry(5, 5, 10, 10);
 const planeMaterial = new THREE.MeshPhongMaterial({
-	color: 0xff0000,
 	side: THREE.DoubleSide,
 	flatShading: true,
+	vertexColors: true,
 });
 const planeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
 scene.add(planeMesh);
@@ -69,6 +68,18 @@ for (let i = 0; i < array.length; i += 3) {
 	array[i + 2] = z + Math.random();
 }
 
+const colors = [];
+for (let i = 0; i < planeMesh.geometry.attributes.position.count; i++) {
+	colors.push(1, 0, 0);
+}
+
+planeMesh.geometry.setAttribute(
+	"color",
+	new THREE.BufferAttribute(new Float32Array(colors), 3)
+);
+
+console.log(planeMesh.geometry.attributes);
+
 const light = new THREE.DirectionalLight(0xffffff, 1);
 light.position.set(0, 0, 1);
 scene.add(light);
@@ -80,10 +91,37 @@ scene.add(backLight);
 camera.position.z = 5;
 new OrbitControls(camera, renderer.domElement);
 
+const mouse = {
+	x: undefined,
+	y: undefined,
+};
 function animate() {
 	requestAnimationFrame(animate);
 	renderer.render(scene, camera);
-	// planeMesh.rotation.x += 0.01;
+	raycaster.setFromCamera(mouse, camera);
+	const intersects = raycaster.intersectObject(planeMesh);
+	if (intersects.length > 0) {
+		const { color } = intersects[0].object.geometry.attributes;
+
+		//vertice 1
+		color.setX(intersects[0].face.a, 0);
+		color.setY(intersects[0].face.a, 0);
+		color.setZ(intersects[0].face.a, 1);
+		//vertice 2
+		color.setX(intersects[0].face.b, 0);
+		color.setY(intersects[0].face.b, 0);
+		color.setZ(intersects[0].face.b, 1);
+		//vertice 3
+		color.setX(intersects[0].face.c, 0);
+		color.setY(intersects[0].face.c, 0);
+		color.setZ(intersects[0].face.c, 1);
+		intersects[0].object.geometry.attributes.color.needsUpdate = true;
+	}
 }
 
 animate();
+
+addEventListener("mousemove", (event) => {
+	mouse.x = (event.clientX / innerWidth) * 2 - 1;
+	mouse.y = -((event.clientY / innerHeight) * 2 - 1);
+});
