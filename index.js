@@ -1,5 +1,8 @@
 import * as THREE from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import * as dat from "dat.gui";
+
+console.log(OrbitControls);
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
@@ -70,7 +73,12 @@ const light = new THREE.DirectionalLight(0xffffff, 1);
 light.position.set(0, 0, 1);
 scene.add(light);
 
+const backLight = new THREE.DirectionalLight(0xffffff, 1);
+backLight.position.set(0, 0, -1);
+scene.add(backLight);
+
 camera.position.z = 5;
+new OrbitControls(camera, renderer.domElement);
 
 function animate() {
 	requestAnimationFrame(animate);
